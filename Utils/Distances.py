@@ -34,10 +34,20 @@ class MMD(object):
         
         return np.mean(xx-2*xy+yy)
 
+
+# Distribution Embedding
+
 def general_normal_distribution(X):
     return np.mean(X),np.std(X)
 
+# KL specific distances
 
+def Univariate_Normal(P1,P2):
+    mu1=P1[0]
+    mu2=P2[0]
+    sig1=P1[1]**2
+    sig2=P2[1]**2
+    0.5*(/+sig1/sig2-np.log(sig1/sig2)-1)
 # KL-Divergence
 
 class KL_divergence(object):
@@ -58,6 +68,8 @@ class KL_divergence(object):
 
 
 # Jensen-Shanon Divergence
+
+# Mixture distribution methods
 
 def median_gaussian(d1,d2):
     return (d1[0]+d2[0])/2,(d1[1]+d2[1])/2
