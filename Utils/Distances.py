@@ -1,5 +1,7 @@
 
 import numpy as np
+from keras import backend as k
+from tensorflow import tf
 
 # Maximum mean discrepancy
 
