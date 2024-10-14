@@ -1,7 +1,7 @@
 
 import numpy as np
 from keras import backend as k
-from tensorflow import tf
+import tensorflow as tf
 
 # Maximum mean discrepancy
 
@@ -49,7 +49,7 @@ def Univariate_Normal(P1,P2):
     mu2=P2[0]
     sig1=P1[1]**2
     sig2=P2[1]**2
-    0.5*(/+sig1/sig2-np.log(sig1/sig2)-1)
+    return 0.5*((mu1-mu2)**2/sig2+sig1/sig2-np.log(sig1/sig2)-1)
 # KL-Divergence
 
 class KL_divergence(object):
