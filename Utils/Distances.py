@@ -1,5 +1,7 @@
 
 import numpy as np
+from keras import backend as k
+import tensorflow as tf
 
 # Maximum mean discrepancy
 
@@ -83,6 +85,27 @@ class Jensen_Shanon_divergence(object):
         return distance
 
 # Contrastive Divergence
+
+class Contrastive_Divergence(object):
+    def __init__(self,Model):
+        """
+        Distribution_embedding: function with input of X dimension and output the parameters of the distribution (example mean and variance for normal distribution) 
+            X_1,X_2 [Datapoints,(dimensions)]
+        Distance_function: A function of distance for specific distribution with input of distribution parameters with real output
+        """
+        self.Model=Model
+    
+    def compute(self,X_1,X_2):
+
+        grads_1=k.gradients(k.log(1e-5+self.Model(k.constant(X_1))),self.Model.trainable_weights)
+        grads_1=np.array(list(map(lambda g:k.get_value(g),grads_1)))
+
+        grads_2=k.gradients(k.log(1e-5+self.Model(k.constant(X_2))),self.Model.trainable_weights)
+        grads_2=np.array(list(map(lambda g:k.get_value(g),grads_2)))
+
+        multi_score=np.array(list(map(lambda x1,x2: x1-x2,grads_1,grads_2)))
+
+        return multi_score
 
 # Score Matching
 
