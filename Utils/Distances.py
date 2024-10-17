@@ -11,7 +11,7 @@ def radial_funtion(x,y):
     return np.linalg.norm(x-y)
 
 def guassian_norm_funtion(x,y,sig=0.1):
-    return (np.linalg.norm(x-y)**2)*(1/sig**2)
+    return np.exp((np.linalg.norm(x-y)**2)*(1/sig**2))
 
 # class
 class MMD(object):
@@ -50,7 +50,7 @@ def Univariate_Normal(P1,P2):
     sig1=P1[1]**2
     sig2=P2[1]**2
     return 0.5*((mu1-mu2)**2/sig2+sig1/sig2-np.log(sig1/sig2)-1)
-# KL-Divergence
+#  KL-Divergence
 
 class KL_divergence(object):
     def __init__(self,Distribution_embedding,Distance_function):
@@ -107,7 +107,7 @@ class Contrastive_Divergence(object):
         """
         self.Model=Model
     
-    def compute(self,X_1,X_2):
+    def compute_layer_wise(self,X_1,X_2):
 
         grads_1=k.gradients(k.log(1e-5+self.Model(k.constant(X_1))),self.Model.trainable_weights)
         grads_1=np.array(list(map(lambda g:k.get_value(g),grads_1)))
@@ -118,6 +118,12 @@ class Contrastive_Divergence(object):
         multi_score=np.array(list(map(lambda x1,x2: x1-x2,grads_1,grads_2)))
 
         return multi_score
+
+    def compute(self,X_1,X_2):
+
+        multi_score=self.compute_layer_wise(X_1,X_2)
+
+        return np.mean(np.array(list(map(lambda l:np.mean(l),multi_score))))
 
 # Score Matching
 
