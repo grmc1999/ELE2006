@@ -2,6 +2,65 @@
 import numpy as np
 from keras import backend as k
 import tensorflow as tf
+from glob import glob
+import os
+
+
+class distance_base(object):
+
+    def no_strategy(self,dataA,dataB):
+        return self,dataA,dataB
+
+    def over_sample_smaller(self,dataA,dataB):
+
+        return self,dataA,dataB
+
+    def sub_sample_biggest(self,dataA:list,dataB:list):
+        sub=lambda data:np.random.choice(data,min(len(dataA),len(dataB)))
+        return (sub(dataA),dataB) if len(dataA)>len(dataB) else (dataA,sub(dataB))
+
+    def compute_distance_from_saved(self,data_path: str,model: str,encoding_type:str,domain_A:str,domain_B:str,sample_strategy:str):
+    
+       model_domains=model.split('_')[0]
+       model_iteration=model.split('_')[1]
+       assert model_domains.split('2')[0]==domain_A
+       assert model_domains.split('2')[1]==domain_B
+       #PA_enc_ex_PA2MA_run_0_batch_392
+       domain_A_data=glob(os.path.join(data_path,'{}_{}_{}_*.npy'.format(domain_A,encoding_type,model)))
+       domain_B_data=glob(os.path.join(data_path,'{}_{}_{}_*.npy'.format(domain_B,encoding_type,model)))
+
+       
+    
+       #function (list of path, list of path) --> list of path, list of path
+       domain_A_data,domain_B_data=getattr(self,sample_strategy)(domain_A_data,domain_B_data)
+
+       point_distances=[]
+    
+       for dp_AB in zip(sample_domain_A_data,sample_domain_B_data):
+           dp_AB=(lambda A,B:(np.load(A),np.load(B)))(*dp_AB)
+
+           point_distances=[map(lambda A,B:self.compute(A,B),*dp_AB)]
+       return point_distances
+
+    def compute_distance_from_saved(self,data_path: str,model: str,encoding_type:str,domain_A:str,domain_B:str):
+       model_domains=model.split('_')[0]
+       model_iteration=model.split('_')[1]
+       assert model_domains.split('2')[0]==domain_A
+       assert model_domains.split('2')[1]==domain_B
+       #PA_enc_ex_PA2MA_run_0_batch_392
+       domain_A_data=glob(os.path.join(data_path,'{}_{}_{}_*.npy'.format(domain_A,encoding_type,model)))
+       domain_B_data=glob(os.path.join(data_path,'{}_{}_{}_*.npy'.format(domain_B,encoding_type,model)))
+    
+       point_distances=[]
+    
+       for dp_AB in zip(domain_A_data,domain_B_data):
+           #dp_A=np.load(dp_A)
+           dp_AB=(lambda A,B:(np.load(A),np.load(B)))(*dp_AB)
+           #dp_B=np.load(dp_B)
+
+           for dp_AB_ in zip(*(dp_AB)):
+               point_distances.append(self.compute(*(dp_AB_)))
+       return point_distances
 
 # Maximum mean discrepancy
 
@@ -14,7 +73,7 @@ def guassian_norm_funtion(x,y,sig=0.1):
     return np.exp((np.linalg.norm(x-y)**2)*(1/sig**2))
 
 # class
-class MMD(object):
+class MMD(distance_base):
     def __init__(self,kernel,kernel_trick=False):
         """
         kernel: function of x and y to scalar value
@@ -52,7 +111,7 @@ def Univariate_Normal(P1,P2):
     return 0.5*((mu1-mu2)**2/sig2+sig1/sig2-np.log(sig1/sig2)-1)
 #  KL-Divergence
 
-class KL_divergence(object):
+class KL_divergence(distance_base):
     def __init__(self,Distribution_embedding,Distance_function):
         """
         Distribution_embedding: function with input of X dimension and output the parameters of the distribution (example mean and variance for normal distribution) 
@@ -76,7 +135,7 @@ class KL_divergence(object):
 def median_gaussian(d1,d2):
     return (d1[0]+d2[0])/2,(d1[1]+d2[1])/2
 
-class Jensen_Shanon_divergence(object):
+class Jensen_Shanon_divergence(distance_base):
     def __init__(self,Distribution_embedding,Distance_function,Mixture_distribution_method):
         """
         Distribution_embedding: function with input of X dimension and output the parameters of the distribution (example mean and variance for normal distribution) 
@@ -98,9 +157,10 @@ class Jensen_Shanon_divergence(object):
 
 # Contrastive Divergence
 
-class Contrastive_Divergence(object):
+class Contrastive_Divergence(distance_base):
     def __init__(self,Model):
         """
+        # REF
         Distribution_embedding: function with input of X dimension and output the parameters of the distribution (example mean and variance for normal distribution) 
             X_1,X_2 [Datapoints,(dimensions)]
         Distance_function: A function of distance for specific distribution with input of distribution parameters with real output
